@@ -6,10 +6,13 @@ import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.preprocessing import LabelEncoder
+from sklearn.ensemble import RandomForestClassifier
 from sklearn import preprocessing
 import re
 from sklearn import tree
-from sklearn import cross_validation
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
 
 # Reading the csv file
 from sklearn.preprocessing import LabelEncoder
@@ -127,4 +130,54 @@ plt.figure(figsize=(12, 6))
 sns.heatmap(grouped_run)
 plt.title("Most common run type in a borough")
 plt.show()
+
+# Task 2
+# Label Encoder
+# used to convert categorical data, or text data, into numbers,
+# which our predictive models can better understand.
+labelencoder = LabelEncoder()
+for column in ['Breakdown_or_Running_Late', 'Has_Contractor_Notified_Parents',
+               'Have_You_Alerted_OPT', 'Reason', 'Has_Contractor_Notified_Schools',
+               'School_Age_or_PreK', 'Route_Number', 'School_Year']:
+    data[column] = labelencoder.fit_transform(data[column])
+
+# Dropping features
+data = data.drop(['Busbreakdown_ID', 'Incident_Number',
+                  'Occurred_On', 'Created_On', 'Informed_On',
+                  'Last_Updated_On', 'How_Long_Delayed', 'Boro', 'Run_Type', 'Bus_Company_Name', 'Schools_Serviced','Bus_No'], axis=1)
+
+# Task 3
+# Classification
+def intorfloat(s):
+    try:
+        return int(s)
+    except ValueError:
+        return float(s)
+
+column_names =pd.DataFrame()
+def convertDataType(df):
+    tempCol=[]
+    for k,v in df[0:len(df)].items():
+        for eachVal in range(len(df[0:len(df)])):
+            if(type(v[eachVal]) != float):
+                tempCol.append(intorfloat(v[eachVal]))
+        column_names[k]=tempCol
+        tempCol=[]
+
+convertDataType(data)
+
+y = data['Breakdown_or_Running_Late']
+x = data.drop(['Breakdown_or_Running_Late'], axis=1)
+# Decision Tree Classifier
+x_train, x_test, y_train, y_test = train_test_split(x,y,test_size=0.3)
+dtc=tree.DecisionTreeClassifier(random_state=43)
+dtc_fit = dtc.fit(x_train, y_train)
+dtc_pred = dtc_fit.predict(x_test)
+print( accuracy_score(y_test, dtc_pred))
+
+# Random Forest Classifier
+rf = RandomForestClassifier(n_estimators=70, criterion='gini', max_depth=7)
+rf.fit(x_train,y_train)
+rf_model = rf.predict(x_train)
+print(rf.score(x_test,y_test))
 
